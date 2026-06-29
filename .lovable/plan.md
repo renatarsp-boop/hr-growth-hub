@@ -1,60 +1,83 @@
-## Visão geral
+## Plano: Replicar o Dashboard "Ciclo Maturidade" no Streamlit
 
-Substituir a home placeholder por um dashboard profissional e minimalista do Ciclo Maturidade, combinando o **header da direção 1 (Executivo Suíço)** com o **corpo da direção 3 (Command Center)**, ajustando os KPIs e arredondando os cantos dos cards.
+Objetivo: reproduzir o visual atual (header, hero, KPIs e grid de análises 2×2) em um app Streamlit com aparência próxima do React/Tailwind, mantendo paleta clara minimalista, cantos arredondados e layout 16:9.
 
-## Design tokens (em `src/styles.css`)
+---
 
-- Fundo: `oklch(0.985 0 0)` (off-white)
-- Texto: quase preto + escala de cinzas
-- Acento principal: laranja-coral `#f97316` (alinhado ao logo atual)
-- Acento secundário: índigo `#6366f1` (nav ativo, como no header escolhido)
-- Tipografia: Inter (display + UI) e JetBrains Mono para labels/horário
-- Raio padrão dos cards: `rounded-2xl` (cantos bem arredondados, conforme pedido)
-
-## Header (baseado na imagem 1 — MaturityPulse)
-
-- Barra fixa, fundo branco com leve blur, borda inferior sutil
-- Esquerda: logo (quadrado índigo com círculo) + nome "Ciclo Maturidade"
-- Centro: nav em pílulas — Início (ativo, fundo índigo translúcido), RH - Administração, Ciclo Maturidade, Relatórios
-- Direita: nome do usuário ("Ana Beatriz") + cargo ("HR Lead Analyst") + avatar circular
-
-## Hero / saudação
-
-- Eyebrow em mono laranja: "DASHBOARD DE CONTROLE"
-- H1: "Bem-vindo ao Ciclo 2026"
-- Subtítulo: "Gestão de Maturidade de Empregados — Diretoria de Pessoas"
-- Lado direito: hora local + GMT-3 São Paulo (estilo command center)
-
-## KPIs (4 cards, todos com `rounded-2xl`)
+### 1. Estrutura do projeto
 
 ```text
-[ Total Empregados ] [ % Avaliados ] [ TBD ] [ TBD ]
-     1,284                72%          —       —
+ciclo-maturidade-streamlit/
+├── app.py                  # entrypoint Streamlit (st.navigation)
+├── pages/
+│   ├── 1_Dashboard.py      # tela principal (réplica do index)
+│   ├── 2_RH_Admin.py       # placeholder
+│   └── 3_Relatorios.py     # placeholder
+├── components/
+│   ├── header.py           # SiteHeader custom
+│   ├── kpi.py              # KpiCard (st.container + HTML)
+│   ├── analysis.py         # AnalysisShell + 4 cards
+│   └── hero.py             # Hero com hora local
+├── assets/
+│   ├── logo.svg
+│   └── styles.css          # CSS injetado via st.markdown
+├── data/
+│   └── mock.py             # dados mock dos KPIs e tabelas
+└── requirements.txt        # streamlit, pandas, plotly
 ```
 
-1. **Total Empregados no processo** — número grande, sublabel "no ciclo 2026"
-2. **% Empregados avaliados** — número grande com barra de progresso laranja
-3. **TBD** — placeholder cinza claro, label "Em definição", ícone neutro
-4. **TBD** — idem
+---
 
-Estilo: borda fina, fundo branco, padding generoso, label em mono uppercase, número em peso 700 com tracking apertado, hover sutil na borda.
+### 2. Configuração base
 
-## Resto da página (mantém composição v3)
+- `st.set_page_config(layout="wide", page_title="Ciclo Maturidade — Diretoria de Pessoas", page_icon="assets/logo.svg")`
+- Injeção de CSS via `st.markdown("<style>...</style>", unsafe_allow_html=True)` carregando `assets/styles.css`:
+  - Fontes Google (Inter + JetBrains Mono) via `@import`
+  - Variáveis CSS: `--brand:#f97316`, `--indigo:#6366f1`, `--bg:#fafafa`, `--card:#ffffff`, `--border:#e5e7eb`
+  - Override de containers Streamlit (`[data-testid="stVerticalBlock"]`, `.block-container`) para reduzir paddings e ativar grid 16:9
+  - Classes utilitárias: `.kpi-card`, `.analysis-card`, `.pill-nav`, `.hero-eyebrow` com `border-radius: 16px`, `box-shadow`, `border: 1px solid var(--border)`
 
-- Card "Progresso do Ciclo Atual" com timeline horizontal de 4 etapas
-- Card "Feed de Atividades Recentes" (lista com indicadores coloridos)
-- Aside direito: bloco escuro "Ações Prioritárias" (Iniciar Avaliação / Ver Pendências / Exportar Relatório) + card de insight
-- Footer discreto
+---
 
-## Arquivos
+### 3. Componentes (mapeamento React → Streamlit)
 
-- `src/styles.css` — adicionar tokens de cor/fonte, carregar Inter + JetBrains Mono via `<link>` no `__root.tsx`
-- `src/routes/__root.tsx` — adicionar `<link>` das fontes Google; atualizar `<title>` e meta description para "Ciclo Maturidade"
-- `src/routes/index.tsx` — substituir o placeholder pelo novo dashboard completo
-- `src/components/dashboard/` — componentes auxiliares: `SiteHeader`, `KpiCard`, `CycleTimeline`, `ActivityFeed`, `QuickActions`
+| React (atual) | Streamlit equivalente |
+|---|---|
+| `SiteHeader` (logo + nav pílulas + avatar) | `st.columns([1,6,2])` + HTML custom para as pílulas + `st.image` para avatar |
+| `Hero` (eyebrow, H1, hora) | `st.markdown` com HTML + `datetime.now()` atualizado via `st_autorefresh` |
+| `KpiGrid` (4 cards) | `st.columns(4)` com `st.container(border=True)` estilizado por CSS; valor grande + label + barra de progresso (`st.progress` ou HTML) |
+| `AnalysisGrid` 2×2 | `st.columns(2)` aninhado em duas linhas |
+| `HeadcountsCard` / `CurvasCard` | `pandas.DataFrame` + `st.dataframe` com `column_config` (colunas "Atual" / "Simulado") ou tabela HTML custom |
+| `CategoriasCard` / `EventosCard` | mesma abordagem, com chips coloridos via HTML |
+| `Footer` | `st.markdown` fixo no final |
 
-## Fora de escopo
+---
 
-- Sem lógica de backend / autenticação / dados reais (tudo estático nesta etapa)
-- Sem demais rotas (RH, Ciclo, Relatórios) — apenas links no header
-- Sem dark mode
+### 4. Dados
+
+- Mock inicial em `data/mock.py` (dicionários e DataFrames) replicando os valores do dashboard atual: 42 unidades, 1.284 empregados, 72% avaliados, distribuição Junior/Pleno/Senior/Master/Expert, eventos (Promovidos/Rebaixados/Em análise/Inalterados).
+- Estrutura preparada para depois trocar por leitura de banco (SQLAlchemy/Snowflake/Supabase) sem mexer na UI.
+
+---
+
+### 5. Limitações conhecidas e mitigações
+
+- **Header fixo com nav em pílulas**: Streamlit não tem header customizável nativo → renderizar como primeiro bloco HTML + CSS `position: sticky; top: 0`.
+- **Grid 16:9 apertado**: usar `layout="wide"` + CSS `max-width: 1600px; margin: 0 auto` no `.block-container`, e reduzir `padding-top`.
+- **Sidebar nativa**: ocultar via CSS (`[data-testid="stSidebar"] {display:none}`) já que a navegação será custom no header.
+- **Animações/hover**: limitadas; usar transições CSS simples nos cards.
+- **Multi-página**: usar `st.navigation` (Streamlit ≥ 1.36) em vez da pasta `pages/` automática, para controlar a ordem e os rótulos.
+
+---
+
+### 6. Entregáveis desta primeira iteração
+
+1. `app.py` + `styles.css` + componentes do Dashboard funcionando com dados mock.
+2. Visual fiel ao layout React atual: mesma paleta, tipografia, cantos arredondados, 4 KPIs no topo e grid 2×2 de análises abaixo.
+3. README com instruções: `pip install -r requirements.txt` → `streamlit run app.py`.
+
+---
+
+### Observação
+
+Este plano cria um **projeto Streamlit novo e separado** do app React atual (que continuará intacto neste repositório Lovable). Se quiser, posso gerar os arquivos Python aqui mesmo em uma pasta `streamlit/` para você baixar, ou apenas entregar o conteúdo para colar em outro repositório. Me diga qual prefere.

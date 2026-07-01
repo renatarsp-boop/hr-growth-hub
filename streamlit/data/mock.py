@@ -3,8 +3,16 @@ import pandas as pd
 
 KPIS = {
     "total_unidades": 42,
+    "total_unidades_delta": +3,          # vs ciclo anterior
+    "total_unidades_spark": [36, 37, 39, 38, 40, 41, 42],
+
     "total_empregados": 1284,
+    "total_empregados_delta": +48,
+    "total_empregados_spark": [1180, 1198, 1215, 1230, 1246, 1268, 1284],
+
     "pct_avaliados": 72,
+    "pct_avaliados_delta": +14,          # pontos percentuais
+    "pct_avaliados_spark": [8, 21, 35, 47, 58, 66, 72],
 }
 
 HEADCOUNTS = pd.DataFrame(
@@ -45,4 +53,51 @@ EVENTOS = pd.DataFrame(
         ("Inalterados", 1138, "muted"),
     ],
     columns=["Evento", "Qtd", "tone"],
+)
+
+# Etapas do ciclo (para timeline)
+ETAPAS = [
+    ("Abertura",        "done",    "12/jan"),
+    ("Autoavaliacao",   "done",    "02/fev"),
+    ("Avaliacao Gestor","current", "em curso"),
+    ("Calibracao",      "next",    "10/mar"),
+    ("Feedback",        "next",    "25/mar"),
+    ("Encerramento",    "next",    "05/abr"),
+]
+
+# Insights de destaque
+INSIGHTS = [
+    {
+        "tone": "ok",
+        "eyebrow": "Destaque",
+        "title": "Adesao acima da meta",
+        "value": "+14 p.p.",
+        "hint": "vs. mesmo periodo do ciclo 2025",
+    },
+    {
+        "tone": "warn",
+        "eyebrow": "Atencao",
+        "title": "8 unidades abaixo de 50%",
+        "value": "8/42",
+        "hint": "requerem acompanhamento do RHBP",
+    },
+    {
+        "tone": "brand",
+        "eyebrow": "Projecao",
+        "title": "Fechamento previsto",
+        "value": "05/abr",
+        "hint": "no ritmo atual, meta 100% atingivel",
+    },
+]
+
+# Ranking de unidades (top 5 por adesao)
+RANKING = pd.DataFrame(
+    [
+        ("Usina Tubarao",    98, 312),
+        ("Vega do Sul",      94, 186),
+        ("BioFlorestas",     91, 142),
+        ("Sumare",           88, 224),
+        ("Piracicaba",       84, 168),
+    ],
+    columns=["Unidade", "Adesao", "Empregados"],
 )

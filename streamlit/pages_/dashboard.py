@@ -1,5 +1,5 @@
 import streamlit as st
-from components import header, hero, kpi, analysis
+from components import header, hero, kpi, insights, analysis
 
 
 def render():
@@ -7,8 +7,11 @@ def render():
     hero.render()
     kpi.render()
     st.write("")
+    insights.render()
+    st.write("")
     analysis.render()
     st.markdown(
-        '<div class="site-footer"><div>© 2026 Ciclo Maturidade</div><div>v0.1.0</div></div>',
+        '<div class="site-footer"><div>© 2026 Ciclo Maturidade · Diretoria de Pessoas</div>'
+        '<div>Atualizado agora · v0.2.0</div></div>',
         unsafe_allow_html=True,
     )
